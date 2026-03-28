@@ -40,7 +40,7 @@ Students enter their exam name, number of study days, hours per day, and exam da
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-study-planner.git
+git clone https://github.com/sarveshm555/ai-study-planner.git
 cd ai-study-planner
 ```
 
