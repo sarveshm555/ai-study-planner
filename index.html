@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Planner</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --card: #111118;
+            --border: #1e1e2e;
+            --accent: #7c6aff;
+            --accent2: #ff6a9e;
+            --accent3: #6affd4;
+            --text: #f0f0ff;
+            --muted: #6b6b8a;
+            --glow: 0 0 40px rgba(124, 106, 255, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(124, 106, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(255, 106, 158, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(106, 255, 212, 0.04) 0%, transparent 60%);
+            animation: bgShift 12s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes bgShift {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(2%, 2%) rotate(2deg);
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 56px;
+            animation: fadeDown 0.8s ease both;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(124, 106, 255, 0.12);
+            border: 1px solid rgba(124, 106, 255, 0.3);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-size: 12px;
+            color: var(--accent);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .badge span {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.4rem, 6vw, 3.8rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+
+        h1 .highlight {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 15px;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle strong {
+            color: var(--accent3);
+            font-weight: 500;
+        }
+
+        /* Form card */
+        .form-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--glow), 0 24px 80px rgba(0, 0, 0, 0.4);
+            animation: fadeUp 0.8s ease 0.2s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.6;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            outline: none;
+            width: 100%;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            background: rgba(124, 106, 255, 0.05);
+            box-shadow: 0 0 0 3px rgba(124, 106, 255, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--muted);
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.5);
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--accent), #9b6aff);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(124, 106, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .loading-text strong {
+            color: var(--accent);
+        }
+
+        /* Results */
+        #result {
+            display: none;
+            margin-top: 32px;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .notion-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(106, 255, 212, 0.1);
+            border: 1px solid rgba(106, 255, 212, 0.2);
+            border-radius: 100px;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: var(--accent3);
+            font-weight: 500;
+        }
+
+        .notion-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent3);
+            border-radius: 50%;
+        }
+
+        .days-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .day-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px;
+            align-items: start;
+            transition: all 0.3s ease;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .day-card:hover {
+            border-color: rgba(124, 106, 255, 0.3);
+            background: rgba(124, 106, 255, 0.03);
+            transform: translateX(4px);
+        }
+
+        .day-number {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent), #9b6aff);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .day-content {}
+
+        .day-topic {
+            font-weight: 500;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .day-desc {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .notion-sync {
+            text-align: center;
+            padding: 20px;
+            background: rgba(106, 255, 212, 0.05);
+            border: 1px solid rgba(106, 255, 212, 0.15);
+            border-radius: 14px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--accent3);
+        }
+
+        /* Animations */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Stats row */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 32px;
+            animation: fadeUp 0.8s ease 0.1s both;
+        }
+
+        .stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .form-card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="header">
+            <div class="badge"><span></span> Notion MCP Challenge</div>
+            <h1>Your <span class="highlight">AI Study</span><br>Planner</h1>
+            <p class="subtitle">Powered by <strong>Groq AI</strong> + <strong>Notion MCP</strong> — built for serious
+                students</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">AI</div>
+                <div class="stat-label">Powered Topics</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">Auto</div>
+                <div class="stat-label">Notion Sync</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">Free</div>
+                <div class="stat-label">Forever</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Subject / Exam Name</label>
+                    <input id="subject" placeholder="e.g. GATE Physics, JEE Maths, MBA..." />
+                </div>
+                <div class="form-group">
+                    <label>Study Days</label>
+                    <input id="days" type="number" placeholder="e.g. 10" min="1" max="30" />
+                </div>
+                <div class="form-group">
+                    <label>Hours Per Day</label>
+                    <input id="hours" type="number" placeholder="e.g. 4" min="1" max="12" />
+                </div>
+                <div class="form-group full">
+                    <label>Exam Date</label>
+                    <input id="examDate" type="date" />
+                </div>
+            </div>
+
+            <button class="btn" onclick="generatePlan()" id="btn">🚀 Generate AI Study Plan → Notion</button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p class="loading-text">AI is building your plan...<br><strong>Adding to Notion automatically</strong>
+                </p>
+            </div>
+        </div>
+
+        <div id="result">
+            <div class="result-header">
+                <div class="result-title">Your Study Plan ✨</div>
+                <div class="notion-badge">
+                    <div class="notion-dot"></div> Synced to Notion
+                </div>
+            </div>
+            <div class="days-grid" id="planCards"></div>
+            <div class="notion-sync">
+                📓 All tasks are live in your Notion workspace — open Notion to see your full plan!
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        async function generatePlan() {
+            const subject = document.getElementById("subject").value.trim();
+            const days = document.getElementById("days").value;
+            const hours = document.getElementById("hours").value;
+            const examDate = document.getElementById("examDate").value;
+
+            if (!subject || !days) {
+                alert("Please enter subject and number of days!");
+                return;
+            }
+
+            const btn = document.getElementById("btn");
+            const loading = document.getElementById("loading");
+            const result = document.getElementById("result");
+
+            btn.style.display = "none";
+            loading.style.display = "block";
+            result.style.display = "none";
+
+            try {
+                const res = await fetch("http://localhost:5000/add-task", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ subject, days, hours, examDate })
+                });
+
+                const data = await res.json();
+
+                const cards = data.plan.map((item, i) => `
+          <div class="day-card" style="animation-delay: ${i * 0.05}s">
+            <div class="day-number">${item.day}</div>
+            <div class="day-content">
+              <div class="day-topic">${item.topic}</div>
+              <div class="day-desc">${item.description}</div>
+            </div>
+          </div>
+        `).join("");
+
+                document.getElementById("planCards").innerHTML = cards;
+                result.style.display = "block";
+
+            } catch (error) {
+                alert("Error connecting to server. Make sure node server.js is running!");
+            }
+
+            btn.style.display = "block";
+            loading.style.display = "none";
+            btn.textContent = "🔄 Generate Another Plan";
+        }
+    </script>
+</body>
+
+</html>
